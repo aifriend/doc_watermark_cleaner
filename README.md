@@ -40,10 +40,10 @@ python enhance.py binarize ./image_to_binarize ./directory_to_binarized_image
 ```
 
 image:<br />
-![img.png](src/img.png)
+![img.png](common/img/img.png)
 
 binarized image:<br />
-![img_1.png](src/img_1.png)
+![img_1.png](common/img/img_1.png)
 
 ### Document deblurring
 
@@ -54,10 +54,10 @@ python enhance.py deblur ./image_to_deblur ./directory_to_deblurred_image
 ```
 
 blurred image:<br />
-![img_2.png](src/img_2.png)
+![img_2.png](common/img/img_2.png)
 
 enhanced image:<br />
-![img_3.png](src/img_3.png)
+![img_3.png](common/img/img_3.png)
 
 ### Watermark removal
 
@@ -68,18 +68,18 @@ python enhance.py unwatermark ./image_to_unwatermark ./directory_to_unwatermarke
 ```
 
 watermarked image:<br />
-![img_4.png](src/img_4.png)
+![img_4.png](common/img/img_4.png)
 
 clean image:<br />
-![img_5.png](src/img_5.png)
+![img_5.png](common/img/img_5.png)
 
 ### Document cleaning
 
 degraded image:<br />
-![img_6.png](src/img_6.png)
+![img_6.png](common/img/img_6.png)
 
 cleaned image:<br />
-![img_7.png](src/img_7.png)
+![img_7.png](common/img/img_7.png)
 
 ## Training with your own data
 

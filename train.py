@@ -98,34 +98,43 @@ def train_gan(generator, discriminator, epochs=1, batch_size=128):
             if list_deg_images[im] != list_clean_images[im]:
                 print("Training data mismatch!")
 
+            # unpack watermarked document dataset
             deg_image_path = f"{DEGRADED_TRAIN_DATA}/{list_deg_images[im]}"
             deg_image = image_to_gray(deg_image_path)
-
+            # unpack ground truth clean document dataset
             clean_image_path = f"{GT_TRAIN_DATA}/{list_clean_images[im]}"
             clean_image = image_to_gray(clean_image_path)
 
             wat_batch, gt_batch = get_patches(deg_image, clean_image)
 
+            # calculate the number of training iterations
             batch_count = wat_batch.shape[0] // batch_size
+
+            # manually enumerate epochs
             for pat_idx, b in enumerate(range(batch_count)):
+                # generate a batch of valid samples
                 seed = range(b * batch_size, (b * batch_size) + batch_size)
                 b_wat_batch = wat_batch[seed].reshape(batch_size, 256, 256, 1)
                 b_gt_batch = gt_batch[seed].reshape(batch_size, 256, 256, 1)
-
-                generated_images = generator.predict(b_wat_batch)
-
                 valid = np.ones((b_wat_batch.shape[0],) + (16, 16, 1))
                 fake = np.zeros((b_wat_batch.shape[0],) + (16, 16, 1))
 
+                # generate a batch of fake samples
+                generated_images = generator.predict(b_wat_batch)
+
+                # update discriminator for real samples
                 discriminator.trainable = True
                 d_loss1 = discriminator.train_on_batch([b_gt_batch, b_wat_batch], valid)
+                # update discriminator for generated samples
                 d_loss2 = discriminator.train_on_batch([generated_images, b_wat_batch], fake)
 
+                # update the generator
                 discriminator.trainable = False
                 g_loss = gan.train_on_batch([b_wat_batch], [valid, b_gt_batch])
 
                 loop.set_postfix_str(f"Patch: {pat_idx}/{batch_count}")
 
+        # summarize model performance
         psnr = evaluate(generator, e)
         if psnr > best_psnr:
             save_model(generator, discriminator)
