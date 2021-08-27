@@ -28,10 +28,11 @@ def get_patches(deg_image, clean_image, show=False):
     return wat_batch, gt_batch
 
 
-def _prediction(image_name, generator, epoch):
-    watermarked_image_path = f"{DEGRADED_VAL_DATA}/{image_name}"
+def _prediction(model_name, image_name, generator, epoch):
+    dataset_path = f"./data_{model_name}"
+    watermarked_image_path = f"{dataset_path}/{DEGRADED_VAL_DATA}/{image_name}"
     watermarked_image = image_to_gray(watermarked_image_path)
-    plt.imsave(f"{RESULT_PATH}/{epoch}_original_image_plot.png", watermarked_image, cmap='gray')
+    plt.imsave(f"{RESULT_PATH}/{epoch}_original_image.png", watermarked_image, cmap='gray')
 
     h = ((watermarked_image.shape[0] // 256) + 1) * 256
     w = ((watermarked_image.shape[1] // 256) + 1) * 256
@@ -42,42 +43,43 @@ def _prediction(image_name, generator, epoch):
     predicted_list = []
     for _l in range(test_image_p.shape[0]):
         predicted_list.append(generator.predict(test_image_p[_l].reshape(1, 256, 256, 1)))
-        print(".", end='')
 
     predicted_image = merge_image2(np.array(predicted_list), h, w)
     predicted_image = predicted_image[:watermarked_image.shape[0], :watermarked_image.shape[1]]
     predicted_image = predicted_image.reshape(predicted_image.shape[0], predicted_image.shape[1])
     predicted_image = predicted_image.astype(np.float32)
 
-    plt.imsave(f"{RESULT_PATH}/{epoch}_predicted_image_plot.png", predicted_image, cmap='gray')
+    plt.imsave(f"{RESULT_PATH}/{epoch}_predicted_image.png", predicted_image, cmap='gray')
 
     return predicted_image
 
 
-def evaluate(generator, epoch):
-    gt_image_list = os.listdir(GT_VAL_DATA)
+def evaluate(model_name, generator, epoch):
+    dataset_path = f"./data_{model_name}"
+    gt_image_list = os.listdir(f"{dataset_path}/{GT_VAL_DATA}")
     gt_file_name = random.choice(gt_image_list)
 
     print(f"Evaluation: {gt_file_name}")
-    gt_file_path = f"{GT_VAL_DATA}/{gt_file_name}"
+    gt_file_path = f"{dataset_path}/{GT_VAL_DATA}/{gt_file_name}"
     gt_image = image_to_gray(gt_file_path)
-    predicted_image = _prediction(gt_file_name, generator, epoch)
+    predicted_image = _prediction(model_name, gt_file_name, generator, epoch)
     avg_psnr = psnr(gt_image, predicted_image)
     print(f"\nPSNR: {avg_psnr}")
 
     return avg_psnr
 
 
-def load_data(max_sample):
+def load_data(model_name, max_sample):
     print("Load data", end="")
-    wm_image_list = os.listdir(DEGRADED_TRAIN_DATA)
-    gt_image_list = os.listdir(GT_TRAIN_DATA)
+    dataset_path = f"./data_{model_name}"
+    wm_image_list = os.listdir(f"{dataset_path}/{DEGRADED_TRAIN_DATA}")
+    gt_image_list = os.listdir(f"{dataset_path}/{GT_TRAIN_DATA}")
 
     c_deg_image_list = list()
     c_clean_image_list = list()
     for im in range(len(wm_image_list)):
         if wm_image_list[im] in gt_image_list:
-            d_im = f"{DEGRADED_TRAIN_DATA}/{wm_image_list[im]}"
+            d_im = f"{dataset_path}/{DEGRADED_TRAIN_DATA}/{wm_image_list[im]}"
             c_deg_image_list.append(d_im)
             c_im = d_im.replace("/wm/", "/gt/")
             c_clean_image_list.append(c_im)
@@ -109,14 +111,15 @@ def load_data(max_sample):
 def train_gan(model_name,
               generator, discriminator,
               epochs=1, batch_size=10, max_sample=1):
-    best_psnr = load_score(model_name)
 
     gan = get_gan_network(discriminator, generator)
 
     for e in range(1, epochs + 1):
         print('\nEpoch:', e)
 
-        list_deg_images, list_clean_images = load_data(max_sample)
+        best_psnr = load_score(model_name)
+
+        list_deg_images, list_clean_images = load_data(model_name, max_sample)
 
         loop = tqdm(range(len(list_deg_images)), leave=True, position=0)
         for imd in loop:
@@ -156,17 +159,29 @@ def train_gan(model_name,
                 discriminator.trainable = False
                 g_loss = gan.train_on_batch([b_wat_batch], [valid, b_gt_batch])
 
-                loop.set_postfix_str(f"Patch: {pat_idx}/{batch_count}")
+                loop.set_postfix_str(f"Patch: {pat_idx+1}/{batch_count}")
 
         # summarize model performance
-        psnr = evaluate(generator, e)
+        psnr = evaluate(model_name, generator, e)
         if psnr > best_psnr:
-            best_psnr = psnr
             save_default_model(generator, discriminator)
             save_score(model_name, psnr)
 
 
-def main():
+def denoise_removal():
+    model_name = "dn"
+    for file in ClassFile.list_files(RESULT_PATH):
+        os.remove(file)
+
+    generator = Generator(biggest_layer=1024)
+    discriminator = Discriminator()
+
+    load_model(model_name, generator, discriminator)
+
+    train_gan(model_name, generator, discriminator, epochs=30, batch_size=5, max_sample=150)
+
+
+def watermark_removal():
     model_name = "wm"
     for file in ClassFile.list_files(RESULT_PATH):
         os.remove(file)
@@ -180,4 +195,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    denoise_removal()
