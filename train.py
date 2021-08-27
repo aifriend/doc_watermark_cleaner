@@ -161,10 +161,8 @@ def main():
     for file in ClassFile.list_files(RESULT_PATH):
         os.remove(file)
 
-    generator = Generator(biggest_layer=512)
+    generator = Generator(biggest_layer=1024)
     discriminator = Discriminator()
-
-    load_model(generator, discriminator)
 
     train_gan(generator, discriminator, epochs=30, batch_size=10, max_sample=150)
 
