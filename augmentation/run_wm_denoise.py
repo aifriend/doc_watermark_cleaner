@@ -15,7 +15,7 @@ if not os.path.exists('data/val/gt'):
     os.makedirs('data/val/gt')
 
 GENERATION_FACTOR = 1
-MAX_DATA = 50
+MAX_DATA = 100
 SOURCE_SOURCE = "source"
 DATA_SOURCE = "no_logo"
 LOGO_SOURCE = "logo"
@@ -30,7 +30,7 @@ def sp_noise(image, prob):
             if rdn < prob:
                 output[i][j] = 0
             elif rdn > threshold:
-                output[i][j] = 255
+                output[i][j] = random.randint(128, 255)
             else:
                 output[i][j] = image[i][j]
     return output
@@ -48,12 +48,12 @@ def noisy(source, idx, value_set):
         noise_image_v = np.array(noisy_image)
         #Image.fromarray(noise_image_v).show()
 
-        max_noise = random.uniform(0.000001, 0.01)
+        max_noise = random.uniform(0.001, 0.01)
         noise_image_v = sp_noise(noise_image_v, max_noise)
         noisy_image = Image.fromarray(noise_image_v)
         #noisy_image.show()
 
-        image_file = f"t2_{idx}_{aug_idx}_noisy_gauss.png"
+        image_file = f"t5_{idx}_{aug_idx}_noisy_gauss.png"
         if not value_set:
             clean_image.save('data/train/gt/' + image_file)
             noisy_image.save('data/train/wm/' + image_file)

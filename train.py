@@ -107,7 +107,7 @@ def train_gan(generator, discriminator, epochs=1, batch_size=10, max_sample=1):
 
         list_deg_images, list_clean_images = load_data(max_sample)
 
-        loop = tqdm(enumerate(range(max_sample)), leave=True, position=0)
+        loop = tqdm(enumerate(range(len(list_deg_images))), leave=True, position=0)
         for wm_idx, im in loop:
             loop.set_description(f"Document [{wm_idx+1}/{max_sample}] - "
                                  f"PSNR [{round(best_psnr, 2)}]")
@@ -164,7 +164,9 @@ def main():
     generator = Generator(biggest_layer=1024)
     discriminator = Discriminator()
 
-    train_gan(generator, discriminator, epochs=30, batch_size=10, max_sample=150)
+    load_model(generator, discriminator)
+
+    train_gan(generator, discriminator, epochs=30, batch_size=5, max_sample=150)
 
 
 if __name__ == '__main__':
