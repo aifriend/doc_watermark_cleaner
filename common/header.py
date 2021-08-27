@@ -5,3 +5,4 @@ GT_VAL_DATA = './data/val/gt'
 TRAIN_MODEL_PATH = './weights'
 RESULT_PATH = './results'
 TEST_PATH = './test'
+DEFAULT_SHAPE = (768, 1024)

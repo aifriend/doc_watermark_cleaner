@@ -4,6 +4,8 @@ from random import randint
 
 from PIL import Image
 
+from common.header import DEFAULT_SHAPE
+
 if not os.path.exists('data/train/wm'):
     os.makedirs('data/train/wm')
 if not os.path.exists('data/train/gt'):
@@ -21,7 +23,7 @@ LOGO_SOURCE = "my_logo"
 
 def watermarking(source, idx, value_set):
     im = Image.open(source)
-    im = im.resize((768, 1024)).convert("RGBA")
+    im = im.resize(DEFAULT_SHAPE).convert("RGBA")
 
     # clean image
     clean_image = im.copy()
@@ -31,7 +33,7 @@ def watermarking(source, idx, value_set):
     logo_image_list = os.listdir(LOGO_SOURCE)
     for logo in logo_image_list:
         logo_image = Image.open(f"{LOGO_SOURCE}/{logo}")
-        mk_image_list[logo] = logo_image.resize((768, 1024)).convert("RGBA")
+        mk_image_list[logo] = logo_image.resize(DEFAULT_SHAPE).convert("RGBA")
 
     for aug_idx in range(GENERATION_FACTOR):
         mk_label, mk_image = random.choice(list(mk_image_list.items()))

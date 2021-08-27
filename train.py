@@ -90,7 +90,7 @@ def load_data(max_sample):
     list_deg_im = list()
     for d_im in list_deg:
         deg_image = image_to_gray(d_im)
-        deg_image = cv2.resize(deg_image, (768, 1024))
+        deg_image = cv2.resize(deg_image, DEFAULT_SHAPE)
         list_deg_im.append(deg_image)
         print(".", end="")
 
@@ -98,7 +98,7 @@ def load_data(max_sample):
     list_clean_im = list()
     for c_im in list_clean:
         gt_image = image_to_gray(c_im)
-        gt_image = cv2.resize(gt_image, (768, 1024))
+        gt_image = cv2.resize(gt_image, DEFAULT_SHAPE)
         list_clean_im.append(gt_image)
         print(".", end="")
     print()
