@@ -94,11 +94,10 @@ def load_data(max_sample):
     return list_deg, list_clean
 
 
-def train_gan(generator, discriminator, epochs=1, batch_size=10, max_sample=1):
-    try:
-        best_psnr = float(ClassFile.get_text(TRAIN_PSNR_PATH))
-    except:
-        best_psnr = 0.0
+def train_gan(model_name,
+              generator, discriminator,
+              epochs=1, batch_size=10, max_sample=1):
+    best_psnr = load_score(model_name)
 
     gan = get_gan_network(discriminator, generator)
 
@@ -107,7 +106,7 @@ def train_gan(generator, discriminator, epochs=1, batch_size=10, max_sample=1):
 
         list_deg_images, list_clean_images = load_data(max_sample)
 
-        loop = tqdm(enumerate(range(max_sample)), leave=True, position=0)
+        loop = tqdm(enumerate(range(len(list_deg_images))), leave=True, position=0)
         for wm_idx, im in loop:
             loop.set_description(f"Document [{wm_idx+1}/{max_sample}] - "
                                  f"PSNR [{round(best_psnr, 2)}]")
@@ -152,21 +151,22 @@ def train_gan(generator, discriminator, epochs=1, batch_size=10, max_sample=1):
         # summarize model performance
         psnr = evaluate(generator, e)
         if psnr > best_psnr:
-            save_model(generator, discriminator)
             best_psnr = psnr
-            ClassFile.to_txtfile(str(best_psnr), TRAIN_PSNR_PATH)
+            save_default_model(generator, discriminator)
+            save_score(model_name, psnr)
 
 
 def main():
+    model_name = "wm"
     for file in ClassFile.list_files(RESULT_PATH):
         os.remove(file)
 
     generator = Generator(biggest_layer=512)
     discriminator = Discriminator()
 
-    load_model(generator, discriminator)
+    load_model(model_name, generator, discriminator)
 
-    train_gan(generator, discriminator, epochs=30, batch_size=10, max_sample=150)
+    train_gan(model_name, generator, discriminator, epochs=30, batch_size=10, max_sample=150)
 
 
 if __name__ == '__main__':

@@ -8,6 +8,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image, ImageStat
 
+from common.ClassFile import ClassFile
 from common.header import TRAIN_MODEL_PATH
 
 
@@ -110,32 +111,57 @@ def getPatches(watermarked_image, clean_image, my_stride):
     return np.array(watermarked_patches), np.array(clean_patches)
 
 
-def save_model(generator_model, discriminator_model):
-    generator_model.save_weights(TRAIN_MODEL_PATH + '/last_generator_weights.h5')
-    discriminator_model.save_weights(TRAIN_MODEL_PATH + '/last_discriminator_weights.h5')
-    print("Model saved")
-
-
-def load_model(generator, discriminator):
+def load_model(model_name, generator, discriminator):
+    default_generator_name = "last_generator.h5"
+    default_discriminator_name = "last_discriminator.h5"
     try:
-        generator.load_weights(TRAIN_MODEL_PATH + '/last_generator_weights.h5')
-        print("Load generator trained model")
+        generator.load_weights(TRAIN_MODEL_PATH + f"/{model_name}_generator.h5")
+        print(f"Loaded {model_name.upper()} generator trained model")
     except OSError as _:
         print("No generator model loaded!")
 
     try:
-        discriminator.load_weights(TRAIN_MODEL_PATH + '/last_discriminator_weights.h5')
-        print("Load discriminator trained model")
+        discriminator.load_weights(TRAIN_MODEL_PATH + f"/{model_name}_discriminator.h5")
+        print(f"Loaded {model_name.upper()} discriminator trained model")
     except OSError as _:
         print("No discriminator model loaded!")
 
 
-def load_default(generator):
+def save_default_model(generator_model, discriminator_model):
     try:
-        generator.load_weights(TRAIN_MODEL_PATH + '/model/watermark_rem_weights.h5')
+        model_gen_path = f"{TRAIN_MODEL_PATH}/last_generator.h5"
+        generator_model.save_weights(model_gen_path)
+        model_disc_path = f"{TRAIN_MODEL_PATH}/last_discriminator.h5"
+        discriminator_model.save_weights(model_disc_path)
+        print("Model DEFAULT saved")
+    except OSError as _:
+        print("No generator model saved!")
+
+
+def load_default_model(generator):
+    try:
+        model_path = f"{TRAIN_MODEL_PATH}/model/watermark_rem_weights.h5"
+        generator.load_weights(model_path)
         print("Load default generator trained model")
     except OSError as _:
         print("No generator model loaded!")
+
+
+def load_score(model_name):
+    try:
+        score_path = f"{TRAIN_MODEL_PATH}/{model_name}_score.txt"
+        score = ClassFile.get_text(score_path)
+        psnr = float(score)
+        print(f"Loaded {model_name.upper()} score: {psnr}")
+    except:
+        psnr = 0.0
+        print("No score loaded!")
+
+    return psnr
+
+
+def save_score(model_name, score):
+    ClassFile.to_txtfile(str(score), f"{TRAIN_MODEL_PATH}/{model_name}_score.txt")
 
 
 def filter_data(path, pattern, sub_pattern, remove=False):
