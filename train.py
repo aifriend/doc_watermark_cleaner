@@ -15,8 +15,6 @@ import tensorflow as tf
 
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
-MAX_TRAIN_DATA = 200
-
 
 def get_patches(deg_image, clean_image, show=False):
     wat_batch, gt_batch = getPatches(deg_image, clean_image, my_stride=128 + 64)
@@ -70,7 +68,7 @@ def evaluate(generator, epoch):
     return avg_psnr
 
 
-def load_data():
+def load_data(max_sample):
     print("Load data")
     wm_image_list = os.listdir(DEGRADED_TRAIN_DATA)
     gt_image_list = os.listdir(GT_TRAIN_DATA)
@@ -90,13 +88,13 @@ def load_data():
     random.shuffle(list_images)
 
     list_deg, list_clean = zip(*list_images)
-    list_deg = list_deg[:MAX_TRAIN_DATA]
-    list_clean = list_clean[:MAX_TRAIN_DATA]
+    list_deg = list_deg[:max_sample]
+    list_clean = list_clean[:max_sample]
 
     return list_deg, list_clean
 
 
-def train_gan(generator, discriminator, epochs=1, batch_size=10):
+def train_gan(generator, discriminator, epochs=1, batch_size=10, max_sample=1):
     try:
         best_psnr = float(ClassFile.get_text(TRAIN_PSNR_PATH))
     except:
@@ -107,11 +105,11 @@ def train_gan(generator, discriminator, epochs=1, batch_size=10):
     for e in range(1, epochs + 1):
         print('\nEpoch:', e)
 
-        list_deg_images, list_clean_images = load_data()
+        list_deg_images, list_clean_images = load_data(max_sample)
 
-        loop = tqdm(enumerate(range(MAX_TRAIN_DATA)), leave=True, position=0)
+        loop = tqdm(enumerate(range(max_sample)), leave=True, position=0)
         for wm_idx, im in loop:
-            loop.set_description(f"Document [{wm_idx+1}/{MAX_TRAIN_DATA}] - "
+            loop.set_description(f"Document [{wm_idx+1}/{max_sample}] - "
                                  f"PSNR [{round(best_psnr, 2)}]")
 
             # unpack watermarked document dataset
@@ -168,7 +166,7 @@ def main():
 
     load_model(generator, discriminator)
 
-    train_gan(generator, discriminator, epochs=30, batch_size=10)
+    train_gan(generator, discriminator, epochs=30, batch_size=10, max_sample=150)
 
 
 if __name__ == '__main__':

@@ -16,7 +16,7 @@ if not os.path.exists('data/val/gt'):
 GENERATION_FACTOR = 1
 MAX_DATA = 150
 DATA_SOURCE = "no_logo"
-LOGO_SOURCE = "logo"
+LOGO_SOURCE = "my_logo"
 
 
 def watermarking(source, idx, value_set):

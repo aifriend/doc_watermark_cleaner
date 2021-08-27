@@ -1,5 +1,6 @@
 import glob
 import math
+import os
 import re
 import shutil
 
@@ -137,10 +138,12 @@ def load_default(generator):
         print("No generator model loaded!")
 
 
-def clean(path, pattern, sub_pattern):
+def filter_data(path, pattern, sub_pattern, remove=False):
     list_deg_images = glob.glob(f"{path}/{pattern}")
     for x in list_deg_images:
         x_list = re.findall(f"{sub_pattern}", x)
         f_name = x_list.pop()
         shutil.copy(x, f"./data/{f_name}")
+        if remove:
+            os.remove(x)
         print(f"{x} -> ./data/{f_name}", end="")
