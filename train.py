@@ -4,8 +4,8 @@ import random
 from tqdm import tqdm
 
 from common.ClassFile import ClassFile
-from common.utils import *
 from common.header import *
+from common.utils import *
 from service.Discriminator import Discriminator
 from service.GAN import get_gan_network
 from service.Generator import Generator
@@ -16,6 +16,18 @@ import tensorflow as tf
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
 MAX_TRAIN_DATA = 200
+
+
+def get_patches(deg_image, clean_image, show=False):
+    wat_batch, gt_batch = getPatches(deg_image, clean_image, my_stride=128 + 64)
+    if show:
+        for i, wt in enumerate(wat_batch):
+            plt.imshow(wat_batch[i], cmap="gray", vmin=0, vmax=1)
+            plt.show()
+            plt.imshow(gt_batch[i], cmap="gray", vmin=0, vmax=1)
+            plt.show()
+
+    return wat_batch, gt_batch
 
 
 def _prediction(image_name, generator, epoch):
@@ -58,53 +70,58 @@ def evaluate(generator, epoch):
     return avg_psnr
 
 
-def get_patches(deg_image, clean_image, show=False):
-    wat_batch, gt_batch = getPatches(deg_image, clean_image, my_stride=128 + 64)
-    if show:
-        for i, wt in enumerate(wat_batch):
-            plt.imshow(wat_batch[i], cmap="gray", vmin=0, vmax=1)
-            plt.show()
-            plt.imshow(gt_batch[i], cmap="gray", vmin=0, vmax=1)
-            plt.show()
+def load_data():
+    print("Load data")
+    wm_image_list = os.listdir(DEGRADED_TRAIN_DATA)
+    gt_image_list = os.listdir(GT_TRAIN_DATA)
 
-    return wat_batch, gt_batch
+    c_deg_image_list = list()
+    c_clean_image_list = list()
+    for im in range(len(wm_image_list)):
+        if wm_image_list[im] in gt_image_list:
+            d_im = f"{DEGRADED_TRAIN_DATA}/{wm_image_list[im]}"
+            c_deg_image_list.append(d_im)
+            c_im = d_im.replace("/wm/", "/gt/")
+            c_clean_image_list.append(c_im)
+        else:
+            print("*", end="")
+
+    list_images = list(zip(c_deg_image_list, c_clean_image_list))
+    random.shuffle(list_images)
+
+    list_deg, list_clean = zip(*list_images)
+    list_deg = list_deg[:MAX_TRAIN_DATA]
+    list_clean = list_clean[:MAX_TRAIN_DATA]
+
+    return list_deg, list_clean
 
 
-def train_gan(generator, discriminator, epochs=1, batch_size=128):
+def train_gan(generator, discriminator, epochs=1, batch_size=10):
     try:
         best_psnr = float(ClassFile.get_text(TRAIN_PSNR_PATH))
     except:
         best_psnr = 0.0
-
-    print("Loading data...")
-    list_deg_images = os.listdir(DEGRADED_TRAIN_DATA)
-    list_deg_images = list_deg_images[:MAX_TRAIN_DATA]
-    list_clean_images = os.listdir(GT_TRAIN_DATA)
-    list_clean_images = list_clean_images[:MAX_TRAIN_DATA]
-    list_images = list(zip(list_deg_images, list_clean_images))
-    random.shuffle(list_images)
-    list_deg_images, list_clean_images = zip(*list_images)
 
     gan = get_gan_network(discriminator, generator)
 
     for e in range(1, epochs + 1):
         print('\nEpoch:', e)
 
-        loop = tqdm(enumerate(range(len(list_deg_images))), leave=True, position=0)
+        list_deg_images, list_clean_images = load_data()
+
+        loop = tqdm(enumerate(range(MAX_TRAIN_DATA)), leave=True, position=0)
         for wm_idx, im in loop:
-            loop.set_description(f"Document [{wm_idx+1}/{len(list_deg_images)}] - "
+            loop.set_description(f"Document [{wm_idx+1}/{MAX_TRAIN_DATA}] - "
                                  f"PSNR [{round(best_psnr, 2)}]")
 
-            if list_deg_images[im] != list_clean_images[im]:
-                print("Training data mismatch!")
-
             # unpack watermarked document dataset
-            deg_image_path = f"{DEGRADED_TRAIN_DATA}/{list_deg_images[im]}"
+            deg_image_path = f"{list_deg_images[im]}"
             deg_image = image_to_gray(deg_image_path)
             # unpack ground truth clean document dataset
-            clean_image_path = f"{GT_TRAIN_DATA}/{list_clean_images[im]}"
+            clean_image_path = f"{list_clean_images[im]}"
             clean_image = image_to_gray(clean_image_path)
 
+            # get image patches
             wat_batch, gt_batch = get_patches(deg_image, clean_image)
 
             # calculate the number of training iterations
@@ -150,9 +167,8 @@ def main():
     discriminator = Discriminator()
 
     load_model(generator, discriminator)
-    #load_default(generator)
-    #evaluate(generator, 0)
-    train_gan(generator, discriminator, epochs=30, batch_size=5)
+
+    train_gan(generator, discriminator, epochs=30, batch_size=10)
 
 
 if __name__ == '__main__':

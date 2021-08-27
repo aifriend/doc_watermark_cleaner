@@ -1,4 +1,7 @@
+import glob
 import math
+import re
+import shutil
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -115,13 +118,13 @@ def save_model(generator_model, discriminator_model):
 def load_model(generator, discriminator):
     try:
         generator.load_weights(TRAIN_MODEL_PATH + '/last_generator_weights.h5')
-        print("Loading generator trained model...")
+        print("Load generator trained model")
     except OSError as _:
         print("No generator model loaded!")
 
     try:
         discriminator.load_weights(TRAIN_MODEL_PATH + '/last_discriminator_weights.h5')
-        print("Loading discriminator trained model...")
+        print("Load discriminator trained model")
     except OSError as _:
         print("No discriminator model loaded!")
 
@@ -129,6 +132,15 @@ def load_model(generator, discriminator):
 def load_default(generator):
     try:
         generator.load_weights(TRAIN_MODEL_PATH + '/model/watermark_rem_weights.h5')
-        print("Loading default generator trained model...")
+        print("Load default generator trained model")
     except OSError as _:
         print("No generator model loaded!")
+
+
+def clean(path, pattern, sub_pattern):
+    list_deg_images = glob.glob(f"{path}/{pattern}")
+    for x in list_deg_images:
+        x_list = re.findall(f"{sub_pattern}", x)
+        f_name = x_list.pop()
+        shutil.copy(x, f"./data/{f_name}")
+        print(f"{x} -> ./data/{f_name}", end="")
