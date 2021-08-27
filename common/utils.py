@@ -5,8 +5,8 @@ import re
 import shutil
 
 import numpy as np
-from matplotlib import pyplot as plt
 from PIL import Image, ImageStat
+from matplotlib import pyplot as plt
 
 from common.ClassFile import ClassFile
 from common.header import TRAIN_MODEL_PATH

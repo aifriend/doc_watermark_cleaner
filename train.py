@@ -1,9 +1,9 @@
 import os.path
 import random
 
+from cv2 import cv2
 from tqdm import tqdm
 
-from common.ClassFile import ClassFile
 from common.header import *
 from common.utils import *
 from service.Discriminator import Discriminator
@@ -69,7 +69,7 @@ def evaluate(generator, epoch):
 
 
 def load_data(max_sample):
-    print("Load data")
+    print("Load data", end="")
     wm_image_list = os.listdir(DEGRADED_TRAIN_DATA)
     gt_image_list = os.listdir(GT_TRAIN_DATA)
 
@@ -81,17 +81,29 @@ def load_data(max_sample):
             c_deg_image_list.append(d_im)
             c_im = d_im.replace("/wm/", "/gt/")
             c_clean_image_list.append(c_im)
-        else:
-            print("*", end="")
 
     list_images = list(zip(c_deg_image_list, c_clean_image_list))
     random.shuffle(list_images)
-
     list_deg, list_clean = zip(*list_images)
-    list_deg = list_deg[:max_sample]
-    list_clean = list_clean[:max_sample]
 
-    return list_deg, list_clean
+    list_deg = list_deg[:max_sample]
+    list_deg_im = list()
+    for d_im in list_deg:
+        deg_image = image_to_gray(d_im)
+        deg_image = cv2.resize(deg_image, (768, 1024))
+        list_deg_im.append(deg_image)
+        print(".", end="")
+
+    list_clean = list_clean[:max_sample]
+    list_clean_im = list()
+    for c_im in list_clean:
+        gt_image = image_to_gray(c_im)
+        gt_image = cv2.resize(gt_image, (768, 1024))
+        list_clean_im.append(gt_image)
+        print(".", end="")
+    print()
+
+    return list_deg_im, list_clean_im
 
 
 def train_gan(model_name,
@@ -106,17 +118,15 @@ def train_gan(model_name,
 
         list_deg_images, list_clean_images = load_data(max_sample)
 
-        loop = tqdm(enumerate(range(len(list_deg_images))), leave=True, position=0)
-        for wm_idx, im in loop:
-            loop.set_description(f"Document [{wm_idx+1}/{max_sample}] - "
+        loop = tqdm(range(len(list_deg_images)), leave=True, position=0)
+        for imd in loop:
+            loop.set_description(f"Document [{imd+1}/{max_sample}] - "
                                  f"PSNR [{round(best_psnr, 2)}]")
 
             # unpack watermarked document dataset
-            deg_image_path = f"{list_deg_images[im]}"
-            deg_image = image_to_gray(deg_image_path)
+            deg_image = list_deg_images[imd]
             # unpack ground truth clean document dataset
-            clean_image_path = f"{list_clean_images[im]}"
-            clean_image = image_to_gray(clean_image_path)
+            clean_image = list_clean_images[imd]
 
             # get image patches
             wat_batch, gt_batch = get_patches(deg_image, clean_image)
