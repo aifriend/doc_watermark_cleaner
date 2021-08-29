@@ -75,16 +75,6 @@ def evaluate(model_name, generator, epoch=0):
     return pred
 
 
-def batch_evaluation(model_name, generator):
-    avg_psnr = .0
-    for it in range(10):
-        avg_psnr += evaluate(model_name, generator)
-    avg_psnr = avg_psnr // 10
-    print("Mean PSNR: " + str(avg_psnr))
-
-    return avg_psnr
-
-
 def load_data(model_name, max_sample):
     print("Load data... ", end="")
     dataset_path = f"./data_{model_name}"
@@ -216,16 +206,6 @@ def train_watermark_removal():
     load_model(model_name, generator, discriminator)
 
     train_gan(model_name, generator, discriminator, epochs=30, batch_size=10, max_sample=250)
-
-
-def predict():
-    model_name = "wm"
-    for file in ClassFile.list_files(RESULT_PATH):
-        os.remove(file)
-
-    generator = Generator(biggest_layer=512)
-    generator.load_weights(TRAIN_MODEL_PATH + f"/{model_name}_generator.h5")
-    batch_evaluation(model_name, generator)
 
 
 if __name__ == '__main__':

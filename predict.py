@@ -70,12 +70,22 @@ def load_model():
         print("No generator model loaded!")
 
 
+def batch_evaluation(generator):
+    avg_psnr = .0
+    for it in range(10):
+        avg_psnr += evaluate(generator)
+    avg_psnr = avg_psnr // 10
+    print("Mean PSNR: " + str(avg_psnr))
+
+    return avg_psnr
+
+
 def predict():
     for file in ClassFile.list_files(RESULT_PATH):
         os.remove(file)
 
     model = load_model()
-    evaluate(model)
+    batch_evaluation(model)
 
 
 if __name__ == '__main__':
