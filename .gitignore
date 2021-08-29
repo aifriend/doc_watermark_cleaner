@@ -531,7 +531,6 @@ ipython_config.py
 /weights/
 /src/
 /results/
-/data/
 /augmentation/source/
 /augmentation/no_logo/
 /augmentation/logo/
@@ -539,3 +538,4 @@ ipython_config.py
 /augmentation/logo1/
 /augmentation/my_logo/
 /data_dn/
+/data_wm/

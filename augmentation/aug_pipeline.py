@@ -69,8 +69,8 @@ DATA_SOURCE = "../data/invoice2"
 
 
 def main():
-    if os.path.exists(os.path.join(DATA_SOURCE, "../data/train")):
-        shutil.rmtree(os.path.join(DATA_SOURCE, "../data/train"))
+    if os.path.exists(os.path.join(DATA_SOURCE, "../data_wm/train")):
+        shutil.rmtree(os.path.join(DATA_SOURCE, "../data_wm/train"))
 
     f_count = 3
     f_ext = "jpg"

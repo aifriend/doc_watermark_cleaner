@@ -112,8 +112,6 @@ def getPatches(watermarked_image, clean_image, my_stride):
 
 
 def load_model(model_name, generator, discriminator):
-    default_generator_name = "last_generator.h5"
-    default_discriminator_name = "last_discriminator.h5"
     try:
         generator.load_weights(TRAIN_MODEL_PATH + f"/{model_name}_generator.h5")
         print(f"Loaded {model_name.upper()} generator trained model")
@@ -125,6 +123,17 @@ def load_model(model_name, generator, discriminator):
         print(f"Loaded {model_name.upper()} discriminator trained model")
     except OSError as _:
         print("No discriminator model loaded!")
+
+
+def save_model(model_name, generator_model, discriminator_model):
+    try:
+        model_gen_path = f"{TRAIN_MODEL_PATH}/{model_name}_generator.h5"
+        generator_model.save_weights(model_gen_path)
+        model_disc_path = f"{TRAIN_MODEL_PATH}/{model_name}_discriminator.h5"
+        discriminator_model.save_weights(model_disc_path)
+        print(f"Model {model_name.upper()} saved")
+    except OSError as _:
+        print("No generator model saved!")
 
 
 def save_default_model(generator_model, discriminator_model):

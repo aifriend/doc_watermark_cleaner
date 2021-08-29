@@ -1,5 +1,6 @@
 import os.path
 import random
+from time import sleep
 
 from cv2 import cv2
 from tqdm import tqdm
@@ -32,7 +33,8 @@ def _prediction(model_name, image_name, generator, epoch):
     dataset_path = f"./data_{model_name}"
     watermarked_image_path = f"{dataset_path}/{DEGRADED_VAL_DATA}/{image_name}"
     watermarked_image = image_to_gray(watermarked_image_path)
-    plt.imsave(f"{RESULT_PATH}/{epoch}_original_image.png", watermarked_image, cmap='gray')
+    if epoch:
+        plt.imsave(f"{RESULT_PATH}/{epoch}_original_image.png", watermarked_image, cmap='gray')
 
     h = ((watermarked_image.shape[0] // 256) + 1) * 256
     w = ((watermarked_image.shape[1] // 256) + 1) * 256
@@ -49,28 +51,42 @@ def _prediction(model_name, image_name, generator, epoch):
     predicted_image = predicted_image.reshape(predicted_image.shape[0], predicted_image.shape[1])
     predicted_image = predicted_image.astype(np.float32)
 
-    plt.imsave(f"{RESULT_PATH}/{epoch}_predicted_image.png", predicted_image, cmap='gray')
+    if epoch:
+        plt.imsave(f"{RESULT_PATH}/{epoch}_predicted_image.png", predicted_image, cmap='gray')
 
     return predicted_image
 
 
-def evaluate(model_name, generator, epoch):
-    dataset_path = f"./data_{model_name}"
-    gt_image_list = os.listdir(f"{dataset_path}/{GT_VAL_DATA}")
-    gt_file_name = random.choice(gt_image_list)
+def evaluate(model_name, generator, epoch=0):
+    try:
+        dataset_path = f"./data_{model_name}"
+        gt_image_list = os.listdir(f"{dataset_path}/{GT_VAL_DATA}")
 
-    print(f"Evaluation: {gt_file_name}")
-    gt_file_path = f"{dataset_path}/{GT_VAL_DATA}/{gt_file_name}"
-    gt_image = image_to_gray(gt_file_path)
-    predicted_image = _prediction(model_name, gt_file_name, generator, epoch)
-    avg_psnr = psnr(gt_image, predicted_image)
-    print(f"\nPSNR: {avg_psnr}")
+        gt_file_name = random.choice(gt_image_list)
+        print(f"Evaluation: {gt_file_name}")
+        gt_file_path = f"{dataset_path}/{GT_VAL_DATA}/{gt_file_name}"
+        gt_image = image_to_gray(gt_file_path)
+        predicted_image = _prediction(model_name, gt_file_name, generator, epoch)
+        pred = psnr(gt_image, predicted_image)
+        print(f"PSNR: {pred}")
+    except:
+        pred = .0
+
+    return pred
+
+
+def batch_evaluation(model_name, generator):
+    avg_psnr = .0
+    for it in range(10):
+        avg_psnr += evaluate(model_name, generator)
+    avg_psnr = avg_psnr // 10
+    print("Mean PSNR: " + str(avg_psnr))
 
     return avg_psnr
 
 
 def load_data(model_name, max_sample):
-    print("Load data", end="")
+    print("Load data... ", end="")
     dataset_path = f"./data_{model_name}"
     wm_image_list = os.listdir(f"{dataset_path}/{DEGRADED_TRAIN_DATA}")
     gt_image_list = os.listdir(f"{dataset_path}/{GT_TRAIN_DATA}")
@@ -91,18 +107,24 @@ def load_data(model_name, max_sample):
     list_deg = list_deg[:max_sample]
     list_deg_im = list()
     for d_im in list_deg:
+        # to gray scale for training
         deg_image = image_to_gray(d_im)
+        # resize for training
         deg_image = cv2.resize(deg_image, DEFAULT_SHAPE)
         list_deg_im.append(deg_image)
-        print(".", end="")
+        print("d", end="")
+        sleep(0.1)
 
     list_clean = list_clean[:max_sample]
     list_clean_im = list()
     for c_im in list_clean:
+        # to gray scale for training
         gt_image = image_to_gray(c_im)
+        # resize for training
         gt_image = cv2.resize(gt_image, DEFAULT_SHAPE)
         list_clean_im.append(gt_image)
-        print(".", end="")
+        print("g", end="")
+        sleep(0.1)
     print()
 
     return list_deg_im, list_clean_im
@@ -128,8 +150,10 @@ def train_gan(model_name,
 
             # unpack watermarked document dataset
             deg_image = list_deg_images[imd]
+            # Image.fromarray(deg_image*255).show()
             # unpack ground truth clean document dataset
             clean_image = list_clean_images[imd]
+            # Image.fromarray(clean_image*255).show()
 
             # get image patches
             wat_batch, gt_batch = get_patches(deg_image, clean_image)
@@ -164,11 +188,11 @@ def train_gan(model_name,
         # summarize model performance
         psnr = evaluate(model_name, generator, e)
         if psnr > best_psnr:
-            save_default_model(generator, discriminator)
+            save_model(model_name, generator, discriminator)
             save_score(model_name, psnr)
 
 
-def denoise_removal():
+def train_denoise_removal():
     model_name = "dn"
     for file in ClassFile.list_files(RESULT_PATH):
         os.remove(file)
@@ -178,10 +202,10 @@ def denoise_removal():
 
     load_model(model_name, generator, discriminator)
 
-    train_gan(model_name, generator, discriminator, epochs=30, batch_size=5, max_sample=150)
+    train_gan(model_name, generator, discriminator, epochs=5, batch_size=5, max_sample=150)
 
 
-def watermark_removal():
+def train_watermark_removal():
     model_name = "wm"
     for file in ClassFile.list_files(RESULT_PATH):
         os.remove(file)
@@ -191,8 +215,18 @@ def watermark_removal():
 
     load_model(model_name, generator, discriminator)
 
-    train_gan(model_name, generator, discriminator, epochs=30, batch_size=10, max_sample=150)
+    train_gan(model_name, generator, discriminator, epochs=30, batch_size=10, max_sample=250)
+
+
+def predict():
+    model_name = "wm"
+    for file in ClassFile.list_files(RESULT_PATH):
+        os.remove(file)
+
+    generator = Generator(biggest_layer=512)
+    generator.load_weights(TRAIN_MODEL_PATH + f"/{model_name}_generator.h5")
+    batch_evaluation(model_name, generator)
 
 
 if __name__ == '__main__':
-    denoise_removal()
+    train_watermark_removal()

@@ -1,3 +1,4 @@
+import glob
 import os
 import random
 from random import randint
@@ -16,12 +17,12 @@ if not os.path.exists('data/val/gt'):
     os.makedirs('data/val/gt')
 
 GENERATION_FACTOR = 1
-MAX_DATA = 150
+MAX_DATA = 500
 DATA_SOURCE = "no_logo"
 LOGO_SOURCE = "my_logo"
 
 
-def watermarking(source, idx, value_set):
+def watermarking(source, epoch, idx, value_set):
     im = Image.open(source)
     im = im.resize(DEFAULT_SHAPE).convert("RGBA")
 
@@ -42,7 +43,7 @@ def watermarking(source, idx, value_set):
         m_pose_j = randint(-20, 20)
         background.paste(mk_image, (m_pose_i, m_pose_j), mk_image)
 
-        image_file = f"{aug_idx}_{idx}_{mk_label}"
+        image_file = f"{epoch}_{aug_idx}_{idx}_{mk_label}"
         if value_set:
             clean_image.save('data/train/gt/' + image_file)
             background.save('data/train/wm/' + image_file)
@@ -52,11 +53,13 @@ def watermarking(source, idx, value_set):
 
 
 def run():
-    list_images = os.listdir(DATA_SOURCE)
+    list_images = glob.glob(f"{DATA_SOURCE}/*")
+    random.shuffle(list_images)
 
+    epoch = "f1"
     val_length = len(list_images) // 10  # 10% for validation
-    for i, image in enumerate(list_images, 0):
-        watermarking(os.path.join(DATA_SOURCE, image), i, (i > val_length))
+    for i, image in enumerate(list_images):
+        watermarking(image, epoch, i, (i > val_length))
         print(f"LEFT ({'train' if (i > val_length) else 'val'}): "
               f"{i}/{len(list_images)} <= {MAX_DATA}")
         if i >= MAX_DATA:
