@@ -1,8 +1,5 @@
 import os.path
 import random
-from time import sleep
-
-from cv2 import cv2
 
 from common.header import *
 from common.utils import *

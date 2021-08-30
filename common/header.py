@@ -8,4 +8,3 @@ TEST_PATH = './test'
 DEFAULT_SHAPE = (768, 1024)
 DEFAULT_GENERATOR_MODEL = "last_generator.h5"
 DEFAULT_DISCRIMINATOR_MODEL = "last_discriminator.h5"
-

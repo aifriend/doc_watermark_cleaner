@@ -7,6 +7,7 @@ import shutil
 import numpy as np
 from PIL import Image, ImageStat
 from matplotlib import pyplot as plt
+from tensorflow.keras.models import save_model as save
 
 from common.ClassFile import ClassFile
 from common.header import TRAIN_MODEL_PATH
@@ -124,16 +125,35 @@ def load_model(model_name, generator, discriminator):
     except OSError as _:
         print("No discriminator model loaded!")
 
+    # export_model('xdn', generator, discriminator, sv_format='h5')
 
-def save_model(model_name, generator_model, discriminator_model):
+
+def save_model(model_name, generator_model, discriminator_model, sv_format='h5'):
     try:
-        model_gen_path = f"{TRAIN_MODEL_PATH}/{model_name}_generator.h5"
+        if sv_format == 'h5':
+            model_gen_path = f"{TRAIN_MODEL_PATH}/{model_name}_generator.h5"
+        else:
+            model_gen_path = f"{TRAIN_MODEL_PATH}/{model_name}_generator.ckpt"
         generator_model.save_weights(model_gen_path)
-        model_disc_path = f"{TRAIN_MODEL_PATH}/{model_name}_discriminator.h5"
-        discriminator_model.save_weights(model_disc_path)
+        if sv_format == 'h5':
+            model_disc_path = f"{TRAIN_MODEL_PATH}/{model_name}_discriminator.h5"
+        else:
+            model_disc_path = f"{TRAIN_MODEL_PATH}/{model_name}_discriminator.ckpt"
+        discriminator_model.save_weights(model_disc_path, save_format=sv_format)
         print(f"Model {model_name.upper()} saved")
     except OSError as _:
-        print("No generator model saved!")
+        print("No model saved!")
+
+
+def export_model(model_name, generator_model, discriminator_model, sv_format='h5'):
+    try:
+        model_gen_path = f"{TRAIN_MODEL_PATH}/{model_name}_generator"
+        save(generator_model, model_gen_path, save_format=sv_format)
+        model_disc_path = f"{TRAIN_MODEL_PATH}/{model_name}_discriminator"
+        save(discriminator_model, model_disc_path, save_format=sv_format)
+        print(f"Model {model_name.upper()} exported")
+    except OSError as _:
+        print("No model exported!")
 
 
 def save_default_model(generator_model, discriminator_model):
@@ -144,16 +164,16 @@ def save_default_model(generator_model, discriminator_model):
         discriminator_model.save_weights(model_disc_path)
         print("Model DEFAULT saved")
     except OSError as _:
-        print("No generator model saved!")
+        print("No model saved!")
 
 
 def load_default_model(generator):
     try:
         model_path = f"{TRAIN_MODEL_PATH}/model/watermark_rem_weights.h5"
         generator.load_weights(model_path)
-        print("Load default generator trained model")
+        print("Load default trained model")
     except OSError as _:
-        print("No generator model loaded!")
+        print("No model loaded!")
 
 
 def load_score(model_name):

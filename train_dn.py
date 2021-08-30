@@ -121,7 +121,6 @@ def load_data(max_sample):
 
 def train_gan(generator, discriminator,
               epochs=1, batch_size=10, max_sample=1):
-
     gan = get_gan_network(discriminator, generator)
 
     for e in range(1, epochs + 1):
@@ -133,7 +132,7 @@ def train_gan(generator, discriminator,
 
         loop = tqdm(range(len(list_deg_images)), leave=True, position=0)
         for imd in loop:
-            loop.set_description(f"Document [{imd+1}/{max_sample}] - "
+            loop.set_description(f"Document [{imd + 1}/{max_sample}] - "
                                  f"PSNR [{round(best_psnr, 2)}]")
 
             # unpack watermarked document dataset
@@ -163,19 +162,22 @@ def train_gan(generator, discriminator,
 
                 # update discriminator for real samples
                 discriminator.trainable = True
-                d_loss1 = discriminator.train_on_batch([b_gt_batch, b_wat_batch], valid)
+                d_loss1 = discriminator.train_on_batch(
+                    [b_gt_batch, b_wat_batch], valid, return_dict=True)
                 # update discriminator for generated samples
-                d_loss2 = discriminator.train_on_batch([generated_images, b_wat_batch], fake)
+                d_loss2 = discriminator.train_on_batch(
+                    [generated_images, b_wat_batch], fake, return_dict=True)
 
                 # update the generator
                 discriminator.trainable = False
-                g_loss = gan.train_on_batch([b_wat_batch], [valid, b_gt_batch])
+                g_loss = gan.train_on_batch(
+                    [b_wat_batch], [valid, b_gt_batch], return_dict=True)
 
-                loop.set_postfix_str(f"Patch: {pat_idx+1}/{batch_count}")
+                loop.set_postfix_str(f"Patch: {pat_idx + 1}/{batch_count}")
 
         # summarize model performance
         psnr = evaluate(generator, e)
-        if psnr > best_psnr:
+        if psnr >= best_psnr:
             save_model("dn", generator, discriminator)
             save_score("dn", psnr)
 
