@@ -8,7 +8,7 @@ from tqdm import tqdm
 from common.header import *
 from common.utils import *
 from service.Discriminator import Discriminator
-from service.GAN import get_gan_network
+from service.GAN import Gan
 from service.Generator import Generator
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -121,7 +121,7 @@ def load_data(max_sample):
 
 def train_gan(generator, discriminator,
               epochs=1, batch_size=10, max_sample=1):
-    gan = get_gan_network(discriminator, generator)
+    gan = Gan(generator, discriminator)
 
     for e in range(1, epochs + 1):
         print('\nEpoch:', e)
@@ -191,7 +191,7 @@ def train():
 
     load_model("dn", generator, discriminator)
 
-    train_gan(generator, discriminator, epochs=5, batch_size=5, max_sample=150)
+    train_gan(generator, discriminator, epochs=10, batch_size=5, max_sample=150)
 
 
 if __name__ == '__main__':

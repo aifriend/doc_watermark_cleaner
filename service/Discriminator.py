@@ -1,13 +1,13 @@
 import os
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import *
 from tensorflow.keras.optimizers import *
 
 
 def get_optimizer():
-    return Adam(learning_rate=1e-4)
+    return
 
 
 def Discriminator(input_size=(256, 256, 1)):
@@ -32,7 +32,9 @@ def Discriminator(input_size=(256, 256, 1)):
 
     validity = Conv2D(1, kernel_size=4, strides=1, padding='same', activation='sigmoid')(d4)
 
-    model = Model([img_A, img_B], validity)
-    model.compile(loss='mse', optimizer=get_optimizer(), metrics=['accuracy'])
+    d_model = Model([img_A, img_B], validity, name="critic")
 
-    return model
+    d_model.compile(
+        loss='mse', optimizer=Adam(learning_rate=0.0002, beta_1=0.5, beta_2=0.999), metrics=['accuracy'])
+
+    return d_model

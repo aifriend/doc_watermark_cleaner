@@ -7,6 +7,8 @@ import shutil
 import numpy as np
 from PIL import Image, ImageStat
 from matplotlib import pyplot as plt
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras.models import save_model as save
 
 from common.ClassFile import ClassFile

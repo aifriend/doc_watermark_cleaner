@@ -1,6 +1,6 @@
 import os
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import *
 
@@ -57,6 +57,6 @@ def Generator(input_size=(256, 256, 1), biggest_layer=512):
 
     conv10 = Conv2D(1, 1, activation='sigmoid')(conv9)
 
-    model = Model(inputs=inputs, outputs=conv10)
+    g_model = Model(inputs=inputs, outputs=conv10, name="actor")
 
-    return model
+    return g_model

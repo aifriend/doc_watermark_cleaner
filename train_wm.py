@@ -2,13 +2,14 @@ import os.path
 import random
 from time import sleep
 
+import numpy as np
 from cv2 import cv2
 from tqdm import tqdm
 
 from common.header import *
 from common.utils import *
 from service.Discriminator import Discriminator
-from service.GAN import get_gan_network
+from service.GAN import Gan
 from service.Generator import Generator
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -121,7 +122,7 @@ def load_data(max_sample):
 
 def train_gan(generator, discriminator,
               epochs=1, batch_size=10, max_sample=1):
-    gan = get_gan_network(discriminator, generator)
+    gan = Gan(generator, discriminator)
 
     for e in range(1, epochs + 1):
         print('\nEpoch:', e)
@@ -154,32 +155,49 @@ def train_gan(generator, discriminator,
                 seed = range(b * batch_size, (b * batch_size) + batch_size)
                 b_wat_batch = wat_batch[seed].reshape(batch_size, 256, 256, 1)
                 b_gt_batch = gt_batch[seed].reshape(batch_size, 256, 256, 1)
-                valid = np.ones((b_wat_batch.shape[0],) + (16, 16, 1))
+
+                real = np.ones((b_wat_batch.shape[0],) + (16, 16, 1))
                 fake = np.zeros((b_wat_batch.shape[0],) + (16, 16, 1))
 
-                # generate a batch of fake samples
-                generated_images = generator.predict(b_wat_batch)
+                # train discriminator
+                loss_real, loss_fake = train_discriminator(
+                    discriminator, generator, real, fake, b_wat_batch, b_gt_batch)
 
-                # update discriminator for real samples
-                discriminator.trainable = True
-                d_loss1 = discriminator.train_on_batch(
-                    [b_gt_batch, b_wat_batch], valid, return_dict=True)
-                # update discriminator for generated samples
-                d_loss2 = discriminator.train_on_batch(
-                    [generated_images, b_wat_batch], fake, return_dict=True)
+                # train generator
+                g_loss = train_generator(gan, real, b_wat_batch, b_gt_batch)
 
-                # update the generator
-                discriminator.trainable = False
-                g_loss = gan.train_on_batch(
-                    [b_wat_batch], [valid, b_gt_batch], return_dict=True)
-
-                loop.set_postfix_str(f"Patch: {pat_idx + 1}/{batch_count}")
+                loop.set_postfix_str(f"Pt: {pat_idx + 1}/{batch_count} - "
+                                     f"G:{round(g_loss['loss'], 3)} - "
+                                     f"D:{round(loss_real['loss'] + loss_fake['loss'] / 2, 3)}")
 
         # summarize model performance
         psnr = evaluate(generator, e)
         if psnr > best_psnr:
             save_model("wm", generator, discriminator)
             save_score("wm", psnr)
+
+
+def train_discriminator(discriminator, generator, real, fake, batch_wm, batch_gt):
+    discriminator.trainable = True
+    # update discriminator for real samples
+    loss_real = discriminator.train_on_batch(
+        [batch_gt, batch_wm], real, return_dict=True)
+
+    # generate a batch of fake samples
+    generated_images = generator.predict(batch_wm)
+
+    # update discriminator for generated samples
+    loss_fake = discriminator.train_on_batch(
+        [generated_images, batch_wm], fake, return_dict=True)
+
+    return loss_real, loss_fake
+
+
+def train_generator(gan, real, batch_wm, batch_gt):
+    g_loss = gan.train_on_batch(
+        [batch_wm], [real, batch_gt], return_dict=True)
+
+    return g_loss
 
 
 def train():
@@ -191,7 +209,7 @@ def train():
 
     load_model("wm", generator, discriminator)
 
-    train_gan(generator, discriminator, epochs=30, batch_size=10, max_sample=20)
+    train_gan(generator, discriminator, epochs=10, batch_size=10, max_sample=150)
 
 
 if __name__ == '__main__':
