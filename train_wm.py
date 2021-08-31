@@ -2,7 +2,6 @@ import os.path
 import random
 from time import sleep
 
-import numpy as np
 from cv2 import cv2
 from tqdm import tqdm
 
@@ -14,6 +13,7 @@ from service.Generator import Generator
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
+from tensorflow.python.keras.api.keras import callbacks
 
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
@@ -77,7 +77,7 @@ def evaluate(generator, epoch=0):
 
 
 def load_data(max_sample):
-    print("Load data... ", end="")
+    print(f"Load {max_sample} ...", end="")
     wm_image_list = os.listdir(f"{DATASET_PATH}/{DEGRADED_TRAIN_DATA}")
     gt_image_list = os.listdir(f"{DATASET_PATH}/{GT_TRAIN_DATA}")
 
@@ -120,21 +120,26 @@ def load_data(max_sample):
     return list_deg_im, list_clean_im
 
 
-def train_gan(generator, discriminator,
-              epochs=1, batch_size=10, max_sample=1):
+def train_gan(generator, discriminator, epochs=1, batch_size=10, max_sample=1):
     gan = Gan(generator, discriminator)
+    tensorboard = callbacks.TensorBoard(
+        log_dir='/logs',
+        histogram_freq=0,
+        write_graph=True
+    )
+    tensorboard.set_model(gan)
 
     for e in range(1, epochs + 1):
         print('\nEpoch:', e)
 
+        g_loss_list = list()
         best_psnr = load_score("wm")
 
-        list_deg_images, list_clean_images = load_data(max_sample)
+        list_deg_images, list_clean_images = load_data(random.randint(50, max_sample))
 
         loop = tqdm(range(len(list_deg_images)), leave=True, position=0)
         for imd in loop:
-            loop.set_description(f"Document [{imd + 1}/{max_sample}] - "
-                                 f"PSNR [{round(best_psnr, 2)}]")
+            loop.set_description(f"PSNR [{round(best_psnr, 2)}]")
 
             # unpack watermarked document dataset
             deg_image = list_deg_images[imd]
@@ -164,17 +169,20 @@ def train_gan(generator, discriminator,
                     discriminator, generator, real, fake, b_wat_batch, b_gt_batch)
 
                 # train generator
-                g_loss = train_generator(gan, real, b_wat_batch, b_gt_batch)
+                g_loss = train_generator(gan, real, b_wat_batch, b_gt_batch, tensorboard, e)
 
-                loop.set_postfix_str(f"Pt: {pat_idx + 1}/{batch_count} - "
-                                     f"G:{round(g_loss['loss'], 3)} - "
-                                     f"D:{round(loss_real['loss'] + loss_fake['loss'] / 2, 3)}")
+                g_loss_list.append(g_loss['loss'])
+                loop.set_postfix_str(f"P:{pat_idx + 1}/{batch_count} - "
+                                     f"G:{np.round(np.mean(np.array(g_loss_list)), 2)} - "
+                                     f"D:{round(loss_real['loss'] + loss_fake['loss'] / 2, 2)}")
 
         # summarize model performance
         psnr = evaluate(generator, e)
         if psnr > best_psnr:
             save_model("wm", generator, discriminator)
             save_score("wm", psnr)
+
+    tensorboard.on_train_end(None)
 
 
 def train_discriminator(discriminator, generator, real, fake, batch_wm, batch_gt):
@@ -193,9 +201,10 @@ def train_discriminator(discriminator, generator, real, fake, batch_wm, batch_gt
     return loss_real, loss_fake
 
 
-def train_generator(gan, real, batch_wm, batch_gt):
+def train_generator(gan, real, batch_wm, batch_gt, tensorboard, e):
     g_loss = gan.train_on_batch(
         [batch_wm], [real, batch_gt], return_dict=True)
+    tensorboard.on_epoch_end(e, g_loss)
 
     return g_loss
 
@@ -209,7 +218,7 @@ def train():
 
     load_model("wm", generator, discriminator)
 
-    train_gan(generator, discriminator, epochs=10, batch_size=10, max_sample=150)
+    train_gan(generator, discriminator, epochs=5, batch_size=1, max_sample=250)
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ from tensorflow.python.keras.api.keras import callbacks, preprocessing
 
 
 class TrainingMonitor(callbacks.Callback):
-    def __init__(self, num_img=6, latent_dim=128):
+    def __init__(self, num_img=6, latent_dim=512):
         super().__init__()
         self.num_img = num_img
         self.latent_dim = latent_dim
