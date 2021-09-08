@@ -1,12 +1,5 @@
 logs_path: D:\work\code\gbc.product.registration_invoice.document.processor\logs
 
-cnn:
-  name: convolutional_binary
-  data_path: D:\work\data\invoice
-  epochs: 10
-  batch_size: 16
-  model_path: D:\invoice_MODEL
-
 doc_class:
   img_class_name: doc_invoice_img.pth
   txt_class_name: doc_invoice_txt.model

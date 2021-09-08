@@ -1,5 +1,5 @@
 import os.path
-import random
+import cv2
 
 from common.header import *
 from common.utils import *
@@ -10,13 +10,23 @@ import tensorflow as tf
 
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
-DATA_TEST = f"./data_wm"
+
+def erode_dilate(image_id, image):
+    # Kernel is the matrix with which image is
+    # convolved and third parameter is the number
+    # of iterations, which will determine how much
+    # you want to erode/dilate a given image.
+    img_erosion = cv2.erode(image, np.ones((2, 2), np.uint8), iterations=1)
+    img_dilation = cv2.dilate(img_erosion, np.ones((2, 2), np.uint8), iterations=1)
+
+    # Image.fromarray(img_dilation).show()
+    plt.imsave(f"{RESULT_PATH}/{image_id}_qlean_image.png", img_dilation, cmap='gray')
 
 
-def _prediction(image_name, generator):
-    watermarked_image_path = f"{DATA_TEST}/{DEGRADED_VAL_DATA}/{image_name}"
+def _prediction(image_id, image_name, generator):
+    watermarked_image_path = image_name
     watermarked_image = image_to_gray(watermarked_image_path)
-    plt.imsave(f"{RESULT_PATH}/original_image.png", watermarked_image, cmap='gray')
+    plt.imsave(f"{RESULT_PATH}/{image_id}_original_image.png", watermarked_image, cmap='gray')
 
     h = ((watermarked_image.shape[0] // 256) + 1) * 256
     w = ((watermarked_image.shape[1] // 256) + 1) * 256
@@ -35,55 +45,46 @@ def _prediction(image_name, generator):
     predicted_image = predicted_image.reshape(predicted_image.shape[0], predicted_image.shape[1])
     predicted_image = predicted_image.astype(np.float32)
 
-    plt.imsave(f"{RESULT_PATH}/predicted_image.png", predicted_image, cmap='gray')
+    plt.imsave(f"{RESULT_PATH}/{image_id}_predicted_image.png", predicted_image, cmap='gray')
 
     return predicted_image
 
 
-def evaluate(generator):
+def prediction(generator):
     try:
-        gt_image_list = os.listdir(f"{DATA_TEST}/{GT_VAL_DATA}")
-        gt_file_name = random.choice(gt_image_list)
-
-        print(f"Evaluation: {gt_file_name}")
-        gt_file_path = f"{DATA_TEST}/{GT_VAL_DATA}/{gt_file_name}"
-        gt_image = image_to_gray(gt_file_path)
-        predicted_image = _prediction(gt_file_name, generator)
-        avg_psnr = psnr(gt_image, predicted_image)
-        print(f"PSNR: {avg_psnr}")
+        avg_psnr_list = list()
+        wm_image_list = os.listdir(f"{DATA_TEST}")
+        for idx, wm_file_name in enumerate(wm_image_list):
+            print(f"Evaluation: {wm_file_name}")
+            wm_file_path = f"{DATA_TEST}/{wm_file_name}"
+            wm_image = image_to_gray(wm_file_path)
+            predicted_image = _prediction(idx, wm_file_path, generator)
+            erode_dilate(idx, predicted_image)
+            avg_psnr_list.append((wm_image, predicted_image))
+            if idx == 9999:
+                break
     except:
-        avg_psnr = .0
-
-    return avg_psnr
+        print("Prediction exception!")
 
 
 def load_model():
     try:
         print(f"Loaded generator trained model")
-        model = Generator(biggest_layer=512)
-        model.load_weights(TRAIN_MODEL_PATH + f"/wm_generator.h5")
+        model = Generator(biggest_layer=1024)
+        model.load_weights(os.path.join(TRAIN_MODEL_PATH, "dn_generator.h5"))
         return model
     except OSError as _:
         print("No generator model loaded!")
 
 
-def batch_evaluation(generator):
-    avg_psnr = .0
-    for it in range(10):
-        avg_psnr += evaluate(generator)
-    avg_psnr = avg_psnr // 10
-    print("Mean PSNR: " + str(avg_psnr))
-
-    return avg_psnr
-
-
-def predict():
+def run():
     for file in ClassFile.list_files(RESULT_PATH):
         os.remove(file)
 
     model = load_model()
-    batch_evaluation(model)
+    prediction(model)
 
 
 if __name__ == '__main__':
-    predict()
+    DATA_TEST = f"./data/data_source"
+    run()

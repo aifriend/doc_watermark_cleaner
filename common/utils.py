@@ -130,6 +130,14 @@ def load_model(model_name, generator, discriminator):
     # export_model('xdn', generator, discriminator, sv_format='h5')
 
 
+def load_generator_model(model_name, generator):
+    try:
+        generator.load_weights(TRAIN_MODEL_PATH + f"/{model_name}")
+        print(f"Loaded {model_name.upper()} generator trained model")
+    except OSError as _:
+        print("No generator model loaded!")
+
+
 def save_model(model_name, generator_model, discriminator_model, sv_format='h5'):
     try:
         if sv_format == 'h5':

@@ -17,8 +17,6 @@ from tensorflow.python.keras.api.keras import callbacks
 
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
-DATASET_PATH = f"./data_wm"
-
 
 def get_patches(deg_image, clean_image, show=False):
     wat_batch, gt_batch = getPatches(deg_image, clean_image, my_stride=128 + 64)
@@ -32,7 +30,7 @@ def get_patches(deg_image, clean_image, show=False):
     return wat_batch, gt_batch
 
 
-def _prediction(image_name, generator, epoch):
+def prediction(image_name, generator, epoch):
     watermarked_image_path = f"{DATASET_PATH}/{DEGRADED_VAL_DATA}/{image_name}"
     watermarked_image = image_to_gray(watermarked_image_path)
     if epoch:
@@ -62,14 +60,15 @@ def _prediction(image_name, generator, epoch):
 def evaluate(generator, epoch=0):
     try:
         gt_image_list = os.listdir(f"{DATASET_PATH}/{GT_VAL_DATA}")
-
         gt_file_name = random.choice(gt_image_list)
+
         print(f"Evaluation: {gt_file_name}")
         gt_file_path = f"{DATASET_PATH}/{GT_VAL_DATA}/{gt_file_name}"
         gt_image = image_to_gray(gt_file_path)
-        predicted_image = _prediction(gt_file_name, generator, epoch)
+        predicted_image = prediction(gt_file_name, generator, epoch)
         pred = psnr(gt_image, predicted_image)
         print(f"PSNR: {pred}")
+
     except:
         pred = .0
 
@@ -84,7 +83,7 @@ def load_data(max_sample):
     c_deg_image_list = list()
     c_clean_image_list = list()
     for im in range(len(wm_image_list)):
-        if wm_image_list[im] in gt_image_list:
+        if wm_image_list[im] == gt_image_list[im]:
             d_im = f"{DATASET_PATH}/{DEGRADED_TRAIN_DATA}/{wm_image_list[im]}"
             c_deg_image_list.append(d_im)
             c_im = d_im.replace("/wm/", "/gt/")
@@ -132,6 +131,7 @@ def train_gan(generator, discriminator, epochs=1, batch_size=10, max_sample=1):
     for e in range(1, epochs + 1):
         print('\nEpoch:', e)
 
+        d_loss_list = list()
         g_loss_list = list()
         best_psnr = load_score("wm")
 
@@ -167,14 +167,17 @@ def train_gan(generator, discriminator, epochs=1, batch_size=10, max_sample=1):
                 # train discriminator
                 loss_real, loss_fake = train_discriminator(
                     discriminator, generator, real, fake, b_wat_batch, b_gt_batch)
+                d_loss_list.append(round((loss_real['loss'] + loss_fake['loss']) / 2, 2))
+                discriminator_loss = np.round(np.mean(np.array(d_loss_list)), 2)
 
                 # train generator
                 g_loss = train_generator(gan, real, b_wat_batch, b_gt_batch, tensorboard, e)
+                g_loss_list.append(g_loss['actor_loss'])
+                generator_loss = np.round(np.mean(np.array(g_loss_list)), 2)
 
-                g_loss_list.append(g_loss['loss'])
                 loop.set_postfix_str(f"P:{pat_idx + 1}/{batch_count} - "
-                                     f"G:{np.round(np.mean(np.array(g_loss_list)), 2)} - "
-                                     f"D:{round(loss_real['loss'] + loss_fake['loss'] / 2, 2)}")
+                                     f"G:{str(generator_loss).rjust(2, '0')} - "
+                                     f"D:{str(discriminator_loss).rjust(2, '0')}")
 
         # summarize model performance
         psnr = evaluate(generator, e)
@@ -217,9 +220,11 @@ def train():
     discriminator = Discriminator()
 
     load_model("wm", generator, discriminator)
+    evaluate(generator, 1)
 
-    train_gan(generator, discriminator, epochs=5, batch_size=1, max_sample=250)
+    train_gan(generator, discriminator, epochs=30, batch_size=1, max_sample=250)
 
 
 if __name__ == '__main__':
+    DATASET_PATH = f"./data/data_wm"
     train()

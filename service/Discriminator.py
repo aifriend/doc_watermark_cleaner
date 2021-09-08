@@ -35,6 +35,6 @@ def Discriminator(input_size=(256, 256, 1)):
     d_model = Model([img_A, img_B], validity, name="critic")
 
     d_model.compile(
-        loss='mse', optimizer=Adam(learning_rate=0.0004, beta_1=0.5, beta_2=0.999), metrics=['accuracy'])
+        loss='mse', optimizer=Adam(learning_rate=0.001, beta_1=0.5, beta_2=0.999), metrics=['accuracy'])
 
     return d_model

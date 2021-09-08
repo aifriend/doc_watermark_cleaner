@@ -45,16 +45,15 @@ def load(path, doc=None, ext="jpg"):
 
 def transform(file, image, count):
     _transform = A.Compose([
-        A.HorizontalFlip(p=0.03),
-        A.Rotate(limit=-5, p=0.3),
-        A.GaussNoise(),
-        A.MotionBlur(p=0.3),
-        A.MedianBlur(blur_limit=5, p=0.3),
-        A.Blur(blur_limit=5, p=0.2),
-        A.CLAHE(clip_limit=2),
-        A.Sharpen(),
-        A.Emboss(),
-        A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3),
+        A.HorizontalFlip(p=0.1),
+        A.Rotate(limit=(-5, 5), p=0.9),
+        A.RandomToneCurve(p=0.9),
+        A.GaussNoise(p=0.9),
+        A.MotionBlur(p=0.6),
+        A.MedianBlur(p=0.9),
+        A.Blur(p=0.9),
+        A.RandomBrightnessContrast(brightness_limit=1, contrast_limit=1, p=0.9),
+        A.GlassBlur(p=0.9)
     ])
     random.seed(42)
     augmented_image = list()
