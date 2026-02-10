@@ -1,108 +1,88 @@
-# DE-GAN: A Conditional Generative Adversarial Network for Document Enhancement
+# Document Watermark Cleaner
 
-## Description
+Conditional Generative Adversarial Network (cGAN) for document image enhancement, implementing the DE-GAN architecture for watermark removal, binarization, deblurring, and cleaning.
 
-This is an implementation for the
-paper [DE-GAN: A Conditional Generative Adversarial Network for Document Enhancement](https://ieeexplore.ieee.org/document/9187695)<br>
-DE-GAN is a conditional generative adversarial network designed to enhance the document quality before the recognition
-process. It could be used for document cleaning, binarization, deblurring and watermark removal. The weights are
-available to test the enhancement.
+## Overview
 
-## License
+A deep learning approach to document enhancement using paired training data (degraded → clean). The model learns to transform degraded document images into clean versions through adversarial training.
 
-This work is only allowed for academic research use. For commercial use, please contact the author.
+## Capabilities
 
-## Download
+| Task | Description |
+|------|-------------|
+| Watermark Removal | Remove overlaid watermarks from documents |
+| Binarization | Convert grayscale/color documents to clean binary |
+| Deblurring | Sharpen blurred document images |
+| Cleaning | General noise and artifact removal |
 
-- Clone this repo:
+## Project Structure
 
-```bash
-git clone https://github.com/dali92002/DE-GAN
-cd DE-GAN
+```
+├── augmentation/        # Data augmentation utilities
+├── common/              # Shared utilities and GAN architecture
+│   ├── Generator.py     # Generator network
+│   └── utils.py         # Helper functions
+├── service/             # Service wrapper
+├── predict.py           # Inference script
+├── train_dn.py          # Training script (denoise)
+├── train_wm.py          # Training script (watermark)
+└── requirements.txt
 ```
 
-- Then, download the trained weghts to directly use the model for document enhancement, it is important to save these
-  weights in the subfolder named weights, in the DE-GAN folder. The link to download the weights
-  is : https://drive.google.com/file/d/1J_t-TzR2rxp94SzfPoeuJniSFLfY3HM-/view?usp=sharing
+## Tech Stack
+
+- **Language:** Python 3
+- **Framework:** TensorFlow 2.x
+- **Architecture:** Conditional GAN (pix2pix-based)
 
 ## Requirements
 
-- install the requirements.txt
+- Python 3.6+
+- TensorFlow 2.x
+- GPU recommended for training
 
-## Using DE-GAN
-
-### Document binarization
-
-- To binarize an image use the followng command:
+## Installation
 
 ```bash
-python enhance.py binarize ./image_to_binarize ./directory_to_binarized_image
+pip install -r requirements.txt
 ```
 
-image:<br />
-![img.png](common/img/img.png)
+## Usage
 
-binarized image:<br />
-![img_1.png](common/img/img_1.png)
+### Download Pretrained Weights
+Download from the [Google Drive link](https://drive.google.com) and save to `./weights/`.
 
-### Document deblurring
-
-- To deblur an image use the followng command:
-
+### Inference
 ```bash
-python enhance.py deblur ./image_to_deblur ./directory_to_deblurred_image
+# Watermark removal
+python predict.py --task unwatermark --input ./data_wm --output ./results
+
+# Binarization
+python predict.py --task binarize --input ./input --output ./output
+
+# Deblurring
+python predict.py --task deblur --input ./input --output ./output
 ```
 
-blurred image:<br />
-![img_2.png](common/img/img_2.png)
-
-enhanced image:<br />
-![img_3.png](common/img/img_3.png)
-
-### Watermark removal
-
-- To remove a watermark from an image use the followng command:
-
+### Training
+Prepare paired datasets (degraded + ground truth images), then:
 ```bash
-python enhance.py unwatermark ./image_to_unwatermark ./directory_to_unwatermarked_image
+python train_wm.py   # Train watermark removal
+python train_dn.py   # Train denoising
 ```
-
-watermarked image:<br />
-![img_4.png](common/img/img_4.png)
-
-clean image:<br />
-![img_5.png](common/img/img_5.png)
-
-### Document cleaning
-
-degraded image:<br />
-![img_6.png](common/img/img_6.png)
-
-cleaned image:<br />
-![img_7.png](common/img/img_7.png)
-
-## Training with your own data
-
-- To train with your own data, place your degraded images in the folder "path_to/wm/" and the corresponding ground-truth
-  in the folder "path_to/gt/". It is necessary that each degraded image and its corresponding gt are having the same
-  name (could have different extentions), also, the number images should be the same in both folders.
-- Command to train:
-
-```bash
-python train.py 
-```
-
-- Specifying the batch size and the number of epochs could be done inside the code.
 
 ## Citation
 
-- If this work was useful for you, please cite it as:
+If you use this work, please cite the original paper:
 
-```
-@ARTICLE{Souibgui2020,
-  author={Mohamed Ali Souibgui  and Yousri Kessentini},
-  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence}, 
-  title={DE-GAN: A Conditional Generative Adversarial Network for Document Enhancement}, 
-  year={2020},
-  doi={10.1109/TPAMI.2020.3022406}}
-```
+> Souibgui, M. A., & Kessentini, Y. (2020). DE-GAN: A Conditional Generative Adversarial Network for Document Enhancement. *IEEE Transactions on Pattern Analysis and Machine Intelligence*.
+
+## License
+
+This project is for **academic and research purposes only**. For commercial use, please contact the repository maintainer.
+
+See the [LICENSE](LICENSE) file for details.
+
+## Author
+
+**Jose** — [@aifriend](https://github.com/aifriend)
