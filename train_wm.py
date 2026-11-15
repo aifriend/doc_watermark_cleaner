@@ -16,7 +16,7 @@ import tensorflow as tf
 
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
-DATASET_PATH = f"./data_wm"
+DATASET_PATH = DATA_ROOT
 
 
 def get_patches(deg_image, clean_image, show=False):

@@ -6,16 +6,16 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from common.header import DEFAULT_SHAPE
+from common.header import DATA_ROOT, DEFAULT_SHAPE
 
-if not os.path.exists('data/train/wm'):
-    os.makedirs('data/train/wm')
-if not os.path.exists('data/train/gt'):
-    os.makedirs('data/train/gt')
-if not os.path.exists('data/val/wm'):
-    os.makedirs('data/val/wm')
-if not os.path.exists('data/val/gt'):
-    os.makedirs('data/val/gt')
+if not os.path.exists(DATA_ROOT + '/train/wm'):
+    os.makedirs(DATA_ROOT + '/train/wm')
+if not os.path.exists(DATA_ROOT + '/train/gt'):
+    os.makedirs(DATA_ROOT + '/train/gt')
+if not os.path.exists(DATA_ROOT + '/val/wm'):
+    os.makedirs(DATA_ROOT + '/val/wm')
+if not os.path.exists(DATA_ROOT + '/val/gt'):
+    os.makedirs(DATA_ROOT + '/val/gt')
 
 GENERATION_FACTOR = 1
 MAX_DATA = 250
@@ -60,11 +60,11 @@ def noisy(source, epoch, idx, value_set):
         # background_image.show()
         image_file = f"{epoch}_{idx}_{aug_idx}_noisy.png"
         if not value_set:
-            clean_image.save('data/train/gt/' + image_file)
-            background_image.save('data/train/wm/' + image_file)
+            clean_image.save(DATA_ROOT + '/train/gt/' + image_file)
+            background_image.save(DATA_ROOT + '/train/wm/' + image_file)
         else:
-            clean_image.save('data/val/gt/' + image_file)
-            background_image.save('data/val/wm/' + image_file)
+            clean_image.save(DATA_ROOT + '/val/gt/' + image_file)
+            background_image.save(DATA_ROOT + '/val/wm/' + image_file)
 
         value_set = not value_set
 
@@ -100,11 +100,11 @@ def blurring(source, pipeline, epoch, idx, value_set):
         # background_image.show()
         image_file = f"{epoch}_{idx}_{aug_idx}_noisy_blur.png"
         if not value_set:
-            clean_image.save('data/train/gt/' + image_file)
-            background_image.save('data/train/wm/' + image_file)
+            clean_image.save(DATA_ROOT + '/train/gt/' + image_file)
+            background_image.save(DATA_ROOT + '/train/wm/' + image_file)
         else:
-            clean_image.save('data/val/gt/' + image_file)
-            background_image.save('data/val/wm/' + image_file)
+            clean_image.save(DATA_ROOT + '/val/gt/' + image_file)
+            background_image.save(DATA_ROOT + '/val/wm/' + image_file)
 
         value_set = not value_set
 

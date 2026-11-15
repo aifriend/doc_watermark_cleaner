@@ -10,7 +10,7 @@ import tensorflow as tf
 
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
-DATA_TEST = f"./data_wm"
+DATA_TEST = DATA_ROOT
 
 
 def _prediction(image_name, generator):
@@ -71,7 +71,7 @@ def batch_evaluation(generator):
     avg_psnr = .0
     for it in range(10):
         avg_psnr += evaluate(generator)
-    avg_psnr = avg_psnr // 10
+    avg_psnr = avg_psnr / 10
     print("Mean PSNR: " + str(avg_psnr))
 
     return avg_psnr
