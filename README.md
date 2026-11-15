@@ -88,22 +88,19 @@ pip install -r requirements.txt
 
 ### Download pretrained weights
 
-Pretrained checkpoints are hosted on Google Drive — [TODO: real link] — save them to `./weights/`.
+Pretrained checkpoints are not publicly available yet. Inference expects a generator checkpoint at `./weights/wm_generator.h5`, which you can produce by training with `train_wm.py` (see [Training](#training)).
 
 ## Usage
 
 ### Inference
 
+`predict.py` takes no command-line arguments. Place paired validation images under `./data_wm/val/wm` (watermarked) and `./data_wm/val/gt` (ground truth), and make sure `./weights/wm_generator.h5` exists. Then run:
+
 ```bash
-# Watermark removal
-python predict.py --task unwatermark --input ./data_wm --output ./results
-
-# Binarization
-python predict.py --task binarize --input ./input --output ./output
-
-# Deblurring
-python predict.py --task deblur --input ./input --output ./output
+python predict.py
 ```
+
+The script clears `./results`, loads the watermark-removal generator, and evaluates it on 10 randomly chosen validation images, printing the mean PSNR. For each evaluation it writes `original_image.png` and `predicted_image.png` to `./results` (overwritten on each image, so only the last pair remains). Paths are set in `common/header.py`.
 
 ### Training
 
