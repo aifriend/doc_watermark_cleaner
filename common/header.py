@@ -1,3 +1,4 @@
+DATA_ROOT = './data_wm'
 DEGRADED_TRAIN_DATA = 'train/wm'
 GT_TRAIN_DATA = 'train/gt'
 DEGRADED_VAL_DATA = 'val/wm'

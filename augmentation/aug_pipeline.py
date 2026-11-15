@@ -7,6 +7,7 @@ import cv2
 from matplotlib import pyplot as plt
 
 from common.ClassFile import ClassFile
+from common.header import DATA_ROOT
 
 
 def visualize(_image):
@@ -69,13 +70,13 @@ DATA_SOURCE = "../data/invoice2"
 
 
 def main():
-    if os.path.exists(os.path.join(DATA_SOURCE, "../data_wm/train")):
-        shutil.rmtree(os.path.join(DATA_SOURCE, "../data_wm/train"))
+    if os.path.exists(os.path.join(DATA_ROOT, "train")):
+        shutil.rmtree(os.path.join(DATA_ROOT, "train"))
 
     f_count = 3
     f_ext = "jpg"
     image_list = load(DATA_SOURCE, ext=f_ext)
-    for f_idx, file, image in enumerate(image_list):
+    for f_idx, (file, image) in enumerate(image_list):
         print(f"\nProcessing {f_idx}/{len(image_list)}: {file}\n")
 
         # original image
